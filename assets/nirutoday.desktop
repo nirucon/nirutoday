@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=NIRUTODAY
+GenericName=Today at a Glance
+Comment=Weather, news, warnings, electricity price, name day and your calendar for today
+Exec=nirutoday
+Icon=nirutoday
+Terminal=false
+Categories=Utility;Network;News;
+Keywords=weather;smhi;news;radio;sveriges radio;vma;electricity;price;name day;calendar;traffic;
+StartupWMClass=nirutoday

@@ -1,0 +1,25 @@
+[package]
+name = "nirutoday"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+license = "MIT"
+description = "Today at a glance for NIRUX, in a retro teletext look: SMHI weather, Sveriges Radio news, VMA and warnings, electricity price, name day, your calendar and (optionally) traffic"
+repository = "https://github.com/nirucon/nirutoday"
+
+[dependencies]
+x11rb = "0.13"
+ab_glyph = "0.2"
+toml = "0.8"
+libc = "0.2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
+roxmltree = "0.20"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"
+opt-level = 3
