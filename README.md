@@ -50,7 +50,9 @@ screens.
 | `Q`, `Esc` | quit |
 
 Clicks work too: a story, a tab, **LIVE**, an alert. `nirutoday --print`
-writes today as text, for a terminal.
+writes today as text, for a terminal, and `nirutoday --brief` writes it as one
+line of JSON from the cache only, never the network (NIRUPANEL's Today
+module reads it).
 
 ## Settings
 

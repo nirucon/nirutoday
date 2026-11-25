@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.1 (2026-11-25)
+
+- `nirutoday --brief`: today as one line of JSON (date, week, weather now and
+  the day's high and low, warnings, VMA, name day, sunrise and sunset, the
+  price now and today's events) from the cache only, without the network.
+  NIRUPANEL's Today module shows it.
+
 ## 0.1.0 (2026-11-24)
 
 - First release: weather from SMHI, news from Sveriges Radio (P4 Väst and

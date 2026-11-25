@@ -55,6 +55,10 @@ export DISPLAY=:$D_NUM
 sleep 1
 fail() { echo "FAIL: $*" >&2; [ -f "$SB/out.log" ] && tail -20 "$SB/out.log" >&2; exit 1; }
 shot() { [ -n "$SHOTS" ] && ffmpeg -loglevel error -y -f x11grab -video_size 1920x1080 -i "$DISPLAY" -frames:v 1 "$SHOTS/$1.png" || true; }
+# --brief: one line of JSON from the cache, at once and without the network.
+"$BIN" --brief > "$SB/brief.json" || fail "--brief failed"
+python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); assert d["week"] and "date" in d and "temp" in d, d' "$SB/brief.json" \
+  || fail "--brief gave no weather: $(cat "$SB/brief.json")"
 alive() { kill -0 "$APP" 2>/dev/null || fail "nirutoday died ($*)"; }
 key() { xdotool key --window "$W" "$@"; sleep 0.3; }
 wait_for() { n=$(( $1 * 10 )); shift; while [ $n -gt 0 ]; do "$@" && return 0; sleep 0.1; n=$((n - 1)); done; return 1; }

@@ -109,6 +109,21 @@ pub fn load_calendar(cfg: &Config) -> Result<Vec<calendar::Entry>, String> {
     Ok(entries)
 }
 
+/// Today's calendar from the caches only (for `--brief`).
+pub fn cached_calendar(cfg: &Config) -> Vec<calendar::Entry> {
+    if !cfg.calendar {
+        return Vec::new();
+    }
+    let feeds = calendar::feeds(&theme::config_home()).unwrap_or_default();
+    let all: Vec<_> = feeds
+        .iter()
+        .enumerate()
+        .filter_map(|(i, f)| calendar::events_cached(i, f).map(|e| (f.clone(), e)))
+        .collect();
+    let today = Local::now().date_naive();
+    calendar::entries(&all, today, today + chrono::Duration::days(1))
+}
+
 /// Data from the cache, for the first paint and offline.
 pub fn from_cache(cfg: &Config) -> Data {
     let mut d = Data {

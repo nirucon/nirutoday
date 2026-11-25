@@ -25,6 +25,8 @@ use std::process::ExitCode;
 const HELP: &str = "\
 nirutoday            the page (keys: ? in the window)
 nirutoday --print    today as text, for a terminal (fetches what is stale)
+nirutoday --brief    today in one line of JSON from the cache only, never
+                     the network (NIRUPANEL reads it)
 nirutoday --version
 
 Settings: ~/.config/nirutoday/config.toml (written with the defaults at the
@@ -151,6 +153,65 @@ fn print() -> ExitCode {
     ExitCode::SUCCESS
 }
 
+/// Today in brief, as JSON, from what is cached: no request is made, so
+/// it answers at once and works offline. NIRUPANEL shows it.
+fn brief() -> ExitCode {
+    let cfg = config::load(&theme::config_home());
+    let now = net::now();
+    let today = chrono::Local::now().date_naive();
+    let d = app::from_cache(&cfg);
+    let local = sources::local_time;
+    let mut v = serde_json::json!({
+        "date": sv::date_long(today),
+        "week": sv::week(today),
+        "place": cfg.place,
+        "vma": d.vma.len(),
+        "warnings": d.warnings.iter().filter(|w| w.level > sources::Level::Message).count(),
+    });
+    if let Some(h) = d.weather.iter().find(|h| h.at > now) {
+        v["temp"] = sv::temp(h.temp).into();
+        v["sky"] = ui::symbol_name(h.symbol).into();
+        v["wind"] = sv::dec1(h.wind).into();
+    }
+    if let Some(day) = sources::days(&d.weather, local)
+        .into_iter()
+        .find(|x| x.date == today)
+    {
+        v["high"] = sv::temp(day.high).into();
+        v["low"] = sv::temp(day.low).into();
+        v["rain"] = sv::dec1(day.rain).into();
+    }
+    if let Some(day) = d.day.as_ref().filter(|x| !x.names.is_empty()) {
+        v["names"] = sv::and_list(&day.names).into();
+    }
+    let s = sun::sun(today, cfg.latitude, cfg.longitude);
+    if let (Some(a), Some(b)) = (s.rise, s.set) {
+        v["sunrise"] = sv::time(local(a)).into();
+        v["sunset"] = sv::time(local(b)).into();
+    }
+    if let Some(q) = d.prices[0].iter().find(|q| q.from <= now && now < q.to) {
+        v["price"] = format!("{:.0} öre/kWh", q.ore).into();
+    }
+    let events: Vec<serde_json::Value> = app::cached_calendar(&cfg)
+        .iter()
+        .filter(|e| match e.span {
+            ics::Span::AllDay(..) => true,
+            ics::Span::Timed(_, end) => end > now,
+        })
+        .take(4)
+        .map(|e| {
+            let when = match e.span {
+                ics::Span::AllDay(..) => "all day".to_string(),
+                ics::Span::Timed(a, _) => sv::time(local(a)),
+            };
+            serde_json::json!({ "time": when, "summary": e.summary })
+        })
+        .collect();
+    v["events"] = events.into();
+    println!("{v}");
+    ExitCode::SUCCESS
+}
+
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
     match args.first().map(String::as_str) {
@@ -163,6 +224,7 @@ fn main() -> ExitCode {
             return ExitCode::SUCCESS;
         }
         Some("--print" | "-p") => return print(),
+        Some("--brief") => return brief(),
         Some(other) => {
             eprintln!("nirutoday: unknown option {other} (see --help)");
             return ExitCode::FAILURE;

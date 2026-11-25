@@ -740,7 +740,7 @@ fn panel_weather(
     r + days.len() as i32 * 2 - row
 }
 
-fn symbol_name(s: u8) -> &'static str {
+pub fn symbol_name(s: u8) -> &'static str {
     match s {
         1 => "Clear sky",
         2 => "Nearly clear",

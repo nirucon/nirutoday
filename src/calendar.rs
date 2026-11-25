@@ -158,6 +158,15 @@ pub fn events(index: usize, feed: &Feed) -> Result<Vec<Event>, String> {
     }
 }
 
+/// A feed's events from what is kept here or by NIRUBAR, never fetched.
+pub fn events_cached(index: usize, feed: &Feed) -> Option<Vec<Event>> {
+    if let Some(e) = from_bar(index, feed, i64::MAX) {
+        return Some(e);
+    }
+    let key = format!("calendar-{index}-{}.ics", fingerprint(&feed.url));
+    crate::net::cached(&key).map(|(t, _)| ics::parse(&t))
+}
+
 /// The occurrences of every feed on `[from, to)`, in time order.
 pub fn entries(all: &[(Feed, Vec<Event>)], from: NaiveDate, to: NaiveDate) -> Vec<Entry> {
     let mut zones = Zones::system();
